@@ -1,0 +1,592 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+
+
+
+# Set the correct file path for the medical data
+medical_file_path = "medical_clean.csv"
+# Read the medical data file with keep_default_na
+df = pd.read_csv(medical_file_path, keep_default_na=False, index_col=0)
+
+# Code to check for duplicates
+has_duplicates = df.duplicated().any()
+print("Duplicates present:", has_duplicates)
+
+# Check for missing data
+missing_data = df.isnull().sum()
+
+# Display the missing data counts
+print("Missing data counts:")
+print(missing_data)
+
+# Display data types
+df.info()
+# Visually inspect df
+pd.set_option("display.max_columns", None)
+df.head(5)
+
+
+# Summary statistics for the dependent variable
+ReAdmis_summary = df["ReAdmis"].describe()
+print("Summary Statistics for ReAdmis:")
+print(ReAdmis_summary)
+
+#Summary statistics for independent variables
+# Summary statistics for Children 
+Children_summary = df["Children"].describe()
+print("Summary Statistics for Children:")
+print(Children_summary)
+
+# Summary statistics for Age
+Age_summary = df["Age"].describe()
+print("Summary Statistics for Age:")
+print(Age_summary)
+
+# Summary statistics for Income
+Income_summary = df["Income"].describe()
+print("Summary Statistics for Income:")
+print(Income_summary)
+
+# Summary statistics for VitD_levels
+VitD_levels_summary = df["VitD_levels"].describe()
+print("Summary Statistics for VitD_levels:")
+print(VitD_levels_summary)
+
+# Summary statistics for Doc_visits 
+Doc_visits_summary = df["Doc_visits"].describe()
+print("Summary Statistics for Doc_visits:")
+print(Doc_visits_summary)
+
+# Summary statistics for Full_meals_eaten 
+Full_meals_eaten_summary = df["Full_meals_eaten"].describe()
+print("Summary Statistics for Full_meals_eaten:")
+print(Full_meals_eaten_summary)
+
+# Summary statistics for HighBlood 
+HighBlood_summary = df["HighBlood"].describe()
+print("Summary Statistics for HighBlood :")
+print(HighBlood_summary)
+
+# Summary statistics for Stroke 
+Stroke_summary = df["Stroke"].describe()
+print("Summary Statistics for Stroke :")
+print(Stroke_summary)
+
+# Summary statistics for Overweight 
+Overweight_summary = df["Overweight"].describe()
+print("Summary Statistics for Overweight :")
+print(Overweight_summary)
+
+# Summary statistics for Arthritis 
+Arthritis_summary = df["Arthritis"].describe()
+print("Summary Statistics for Arthritis :")
+print(Arthritis_summary)
+
+# Summary statistics for Diabetes 
+Diabetes_summary = df["Diabetes"].describe()
+print("Summary Statistics for Diabetes :")
+print(Diabetes_summary)
+
+# Summary statistics for Hyperlipidemia 
+Hyperlipidemia_summary = df["Hyperlipidemia"].describe()
+print("Summary Statistics for Hyperlipidemia :")
+print(Hyperlipidemia_summary)
+
+# Summary statistics for BackPain 
+BackPain_summary = df["BackPain"].describe()
+print("Summary Statistics for BackPain :")
+print(BackPain_summary)
+
+# Summary statistics for Anxiety 
+Anxiety_summary = df["Anxiety"].describe()
+print("Summary Statistics for Anxiety :")
+print(Anxiety_summary)
+
+# Summary statistics for Asthma 
+Asthma_summary = df["Asthma"].describe()
+print("Summary Statistics for Asthma :")
+print(Asthma_summary)
+
+# Summary statistics for Initial_days
+Initial_days_summary = df["Initial_days"].describe()
+print("Summary Statistics for Initial_days  :")
+print(Initial_days_summary)
+
+# Summary statistics for TotalCharge  
+TotalCharge_summary = df["TotalCharge"].describe()
+print("Summary Statistics for TotalCharge  :")
+print(TotalCharge_summary)
+
+# Summary statistics for Additional_charges  
+Additional_charges_summary = df["Additional_charges"].describe()
+print("Summary Statistics for Additional_charges  :")
+print(Additional_charges_summary)
+
+# Summary statistics for Initial_admin  
+Initial_admin_summary = df["Initial_admin"].describe()
+print("Summary Statistics for Initial_admin  :")
+print(Initial_admin_summary)
+
+
+
+
+# Dependent Variable Visualization ReAdmis
+# Piechart for ReAdmis
+plt.figure(figsize=[12, 8])
+plt.title('Distribution of Patients Readmitted within 30 days')
+ReAdmis_counts = df.ReAdmis.value_counts()
+ReAdmis_labels = ["Not Readmitted", "Readmitted"]
+plt.pie(ReAdmis_counts, labels=ReAdmis_labels, autopct='%1.1f%%', startangle=90, counterclock=False)
+plt.axis('equal')
+plt.show()
+
+
+
+# Children Univariate and Bivariate
+Children_counts = df["Children"].value_counts()
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Bar chart for Children
+sns.barplot(x=Children_counts.index, y=Children_counts.values, palette="Set3", ax=ax1)
+ax1.set_title('Univariate Analysis of Children')
+ax1.set_xlabel('Number of Children')
+ax1.set_ylabel('Count of Patients')
+for index, value in enumerate(Children_counts.values):
+    ax1.text(index, value, str(value), ha='center', va='bottom')
+
+# Histogram for Children and ReAdmis
+sns.histplot(data=df, x="Children", hue="ReAdmis", bins=30, kde=True, multiple="stack", ax=ax2)
+ax2.set_title("Bivariate Analysis of Children and ReAdmis")
+ax2.set_xlabel("Children")
+ax2.set_ylabel("Count Of Patients")
+handles, labels = ax2.get_legend().legend_handles, ["Not Readmitted", "Readmitted"]
+ax2.legend(handles=handles, labels=labels, title="ReAdmis")
+
+plt.tight_layout()
+plt.show()
+
+
+# Age Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Age
+sns.histplot(df["Age"], kde=True, bins=30, color="red", ax=ax1)
+ax1.set_title('Univariate Analysis of Age')
+ax1.set_xlabel('Age')
+ax1.set_ylabel('Count of Patients')
+
+# Box plot for Age and ReAdmis
+sns.boxplot(x=df["ReAdmis"], y=df["Age"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Age and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Age')
+
+plt.tight_layout()  
+plt.show()
+
+
+
+
+# Income Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Income
+sns.histplot(df["Income"], kde=True, bins=30, color="orange", ax=ax1)
+ax1.set_title('Univariate Analysis of Income')
+ax1.set_xlabel('Income')
+ax1.set_ylabel('Count of Patients')
+
+# Histogram for Income and ReAdmis
+sns.histplot(data=df, x="Income", hue="ReAdmis", bins=30, kde=True, multiple="stack", ax=ax2)
+ax2.set_title("Bivariate Analysis of Income and ReAdmis")
+ax2.set_xlabel("Income")
+ax2.set_ylabel("Number of Patients")
+handles, labels = ax2.get_legend().legend_handles, ["Not Readmitted", "Readmitted"]
+ax2.legend(handles=handles, labels=labels, title="ReAdmis")
+
+plt.tight_layout()
+plt.show()
+
+
+# VitD_levels Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for VitD_levels
+sns.histplot(df["VitD_levels"], kde=True, bins=30, color="yellow", ax=ax1)
+ax1.set_title('Univariate Analysis of VitD_levels')
+ax1.set_xlabel('VitD_levels')
+ax1.set_ylabel('Count of Patients')
+
+# Boxplot for VitD_levels and ReAdmis
+sns.boxplot(x=df["ReAdmis"], y=df["VitD_levels"], ax=ax2)
+ax2.set_title('Bivariate Analysis of VitD_levels and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('VitD_levels')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# Doc_visits Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Doc_visits
+sns.histplot(df["Doc_visits"], kde=True, bins=30, color="blue", ax=ax1)
+ax1.set_title('Univariate Analysis of Doc_visits')
+ax1.set_xlabel('Doc_visits')
+ax1.set_ylabel('Count of Patients')
+
+# Violin plot for Doc_visits and ReAdmis
+sns.violinplot(x=df["ReAdmis"], y=df["Doc_visits"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Doc_visits and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Doc_visits')
+
+plt.tight_layout()
+plt.show()
+
+
+# Full_meals_eaten Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Full_meals_eaten
+sns.histplot(df["Full_meals_eaten"], kde=True, bins=30, color="green", ax=ax1)
+ax1.set_title('Univariate Analysis of Full_meals_eaten')
+ax1.set_xlabel('Full_meals_eaten')
+ax1.set_ylabel('Count of Patients')
+
+# Violin plot for Full_meals_eaten and ReAdmis
+sns.violinplot(x=df["ReAdmis"], y=df["Full_meals_eaten"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Full_meals_eaten and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Full_meals_eaten')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# Generate visualizations yes/no variables
+variables = ["HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma"]
+
+for var in variables:
+    counts = df[var].value_counts()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Pie Chart (Univariate Analysis)
+    ax1.pie(counts, labels=counts.index, autopct='%1.1f%%', colors=sns.color_palette("rainbow"), startangle=140)
+    ax1.set_title(f'Univariate Analysis of {var}')
+    ax1.axis('equal')
+
+    # Count Plot (Bivariate Analysis)
+    sns.countplot(x=df[var], hue=df["ReAdmis"], palette="rainbow", ax=ax2)
+    ax2.set_title(f'Bivariate Analysis of {var} and ReAdmis')
+    ax2.set_xlabel(var)
+    ax2.set_ylabel('Count')
+
+    plt.tight_layout() 
+    plt.show()
+
+
+# Initial_days Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Initial_days
+sns.histplot(df["Initial_days"], kde=True, bins=30, color='teal', ax=ax1)
+ax1.set_title('Univariate Analysis of Initial_days')
+ax1.set_xlabel('Initial Days')
+ax1.set_ylabel('Count of Patients')
+
+# Box Plot for Initial_days and ReAdmis
+sns.boxplot(x=df["ReAdmis"], y=df["Initial_days"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Initial Days and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Initial Days')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# TotalCharge Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for TotalCharge
+sns.histplot(df["TotalCharge"], kde=True, bins=30, color='purple', ax=ax1)
+ax1.set_title('Univariate Analysis of Total Charges')
+ax1.set_xlabel('Total Charges')
+ax1.set_ylabel('Count of Patients')
+
+# Box Plot for TotalCharge and ReAdmis
+sns.boxplot(x=df["ReAdmis"], y=df["TotalCharge"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Total Charges and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Total Charges')
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+# Additional_charges Univariate and Bivariate
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Histogram for Additional_charges
+sns.histplot(df["Additional_charges"], kde=True, bins=30, color='pink', ax=ax1)
+ax1.set_title('Univariate Analysis of Additional charges')
+ax1.set_xlabel('Additional_charges')
+ax1.set_ylabel('Count of Patients')
+
+# Box Plot for Additional_charges and ReAdmis
+sns.boxplot(x=df["ReAdmis"], y=df["Additional_charges"], ax=ax2)
+ax2.set_title('Bivariate Analysis of Additional Charges and ReAdmis')
+ax2.set_xlabel('ReAdmis')
+ax2.set_ylabel('Additional Charges')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# Initial_admin Univariate and Bivariate
+Initial_admin_counts = df["Initial_admin"].value_counts()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Pie Chart for Initial_admin 
+ax1.pie(Initial_admin_counts, labels=Initial_admin_counts.index, autopct='%1.1f%%', startangle=140, colors=sns.color_palette("rainbow"))
+ax1.set_title('Univariate Analysis of Initial_admin')
+ax1.axis('equal')
+
+# Count Plot for Initial_admin and ReAdmis
+sns.countplot(x=df["Initial_admin"], hue=df["ReAdmis"], palette="rainbow", ax=ax2)
+ax2.set_title('Bivariate Analysis of Initial_admin and ReAdmis')
+ax2.set_xlabel('Initial_admin')
+ax2.set_ylabel('Count')
+
+plt.tight_layout()
+plt.show()
+
+
+# Data Transformation needed
+# Update currency to 3 decimal places
+df["Income"] = df["Income"].astype(int)
+
+# Update Initial days to 3 decimal places
+df["Initial_days"] = df["Initial_days"].astype(int)
+
+# Update Total Charges to 3 decimal places
+df["TotalCharge"] = df["TotalCharge"].astype(int)
+
+# Update Additional Charges to 3 decimal places
+df["Additional_charges"] = df["Additional_charges"].astype(int)
+
+# Convert columns to boolean
+bool_mapping = {"Yes": 1, "No": 0}
+columns_to_convert = ["HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "ReAdmis"]
+for col in columns_to_convert:
+    df[col] = df[col].map(bool_mapping)
+
+
+# Generate columns of dummy values
+initial_admit_df = pd.get_dummies(data=df["Initial_admin"], drop_first=True)
+
+
+# Create new df with model variables
+LogReg_df = df[["Children", "Age", "Income", "Doc_visits", "Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "TotalCharge", "Additional_charges", "ReAdmis"]].copy()
+
+# Dummies for Initial Admit
+LogReg_df["initial_admit_elect"] = initial_admit_df["Emergency Admission"].astype(int)
+LogReg_df["initial_admit_obs"] = initial_admit_df["Observation Admission"].astype(int)
+
+
+
+# Visually inspect df
+pd.set_option("display.max_columns", None)
+LogReg_df.head(5)
+
+# Save LogReg_df to a CSV file
+LogReg_df.to_csv("LogReg_df.csv", index=False)
+print("LogReg_df has been saved to LogReg_df.csv'.")
+
+
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "Age", "Income", "Doc_visits", "Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "TotalCharge", "Additional_charges", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+
+# Check for VIF to see if variables should be eliminated due to high multicolinearity
+X = LogReg_df[["Children", "Age", "Income", "Doc_visits", "Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "TotalCharge", "Additional_charges", "initial_admit_obs", "initial_admit_elect" ]]
+
+VIF_df = pd.DataFrame()
+VIF_df["feature"] = X.columns
+
+VIF_df["variance_inflation_factor"] = [variance_inflation_factor(X.values, i)
+for i in range(len(X.columns))]
+
+print(VIF_df)
+
+# Remove the variable with the highest VIF -Round 1
+X_reduced = X.drop(columns=["TotalCharge"])
+
+VIF_df_reduced = pd.DataFrame()
+VIF_df_reduced["feature"] = X_reduced.columns
+VIF_df_reduced["variance_inflation_factor"] = [variance_inflation_factor(X_reduced.values, i) for i in range(len(X_reduced.columns))]
+
+print(VIF_df_reduced)
+
+# Remove the variable with the second highest VIF – Round 2
+X_reduced = X_reduced.drop(columns=["Additional_charges"])
+
+# Recalculate VIFs for the reduced set of variables
+VIF_df_reduced = pd.DataFrame()
+VIF_df_reduced["feature"] = X_reduced.columns
+VIF_df_reduced["variance_inflation_factor"] = [variance_inflation_factor(X_reduced.values, i) for i in range(len(X_reduced.columns))]
+
+print(VIF_df_reduced) 
+
+
+# Remove the variable with the high VIF – Round 3
+X_reduced = X_reduced.drop(columns=["Doc_visits"])
+
+# Recalculate VIFs for the reduced set of variables
+VIF_df_reduced = pd.DataFrame()
+VIF_df_reduced["feature"] = X_reduced.columns
+VIF_df_reduced["variance_inflation_factor"] = [variance_inflation_factor(X_reduced.values, i) for i in range(len(X_reduced.columns))]
+
+print(VIF_df_reduced)
+
+#  Perform backward elimination - recheck after VIF reduction
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "Age", "Income", "Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #1 remove "Age" p=0.704
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "Income", "Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #2 remove "Income" p=0.670
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children","Full_meals_eaten", "HighBlood", "Stroke", "Overweight", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+
+#  Perform backward elimination #3  remove "Overweight" p=0.464
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "Full_meals_eaten", "HighBlood", "Stroke", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #4 remove "Full_meals_eaten" p=0.380 
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "HighBlood", "Stroke", "Arthritis", "Diabetes", "Hyperlipidemia", "BackPain", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #5 remove "BackPain" p=0.175
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "HighBlood", "Stroke",  "Arthritis", "Diabetes", "Hyperlipidemia", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #6 remove "Hyperlipidemia" p=0.070
+y = LogReg_df.ReAdmis
+X = LogReg_df[["Children", "HighBlood", "Stroke",  "Arthritis", "Diabetes", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+
+#  Perform backward elimination #7 remove "Children" p=0.066
+y = LogReg_df.ReAdmis
+X = LogReg_df[["HighBlood", "Stroke",  "Arthritis", "Diabetes", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+#  Perform backward elimination #8 remove "Diabetes" p=0.055
+y = LogReg_df.ReAdmis
+X = LogReg_df[["HighBlood", "Stroke",  "Arthritis", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect" ]].assign(const=1)
+logit_model=sm.Logit(y,X)
+result=logit_model.fit()
+print(result.summary())
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+
+# Assuming 'LogReg_df' is your DataFrame and 'ReAdmis' is the target variable
+X = LogReg_df[["HighBlood", "Stroke", "Arthritis", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect"]]
+y = LogReg_df["ReAdmis"]
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the logistic regression model
+model = LogisticRegression(max_iter=10000)
+model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_prob)
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+# Print the evaluation metrics
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1}")
+print(f"ROC AUC: {roc_auc}")
+print(f"Confusion Matrix:\n{conf_matrix}")
+
+
+# Calculate McFadden's R-squared
+X = LogReg_df[["HighBlood", "Stroke", "Arthritis", "Anxiety", "Asthma", "Initial_days", "initial_admit_obs", "initial_admit_elect"]]
+y = LogReg_df["ReAdmis"]
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Fit the logistic regression model
+logit_model = sm.Logit(y_train, sm.add_constant(X_train)).fit(disp=0)
+
+# Predict on the test set
+y_prob = logit_model.predict(sm.add_constant(X_test))
+y_pred = y_prob >= 0.5
+
+ll_null = logit_model.llnull
+ll_model = logit_model.llf
+mcfadden_r2 = 1 - (ll_model / ll_null)
+
+# Print the results
+print(f"McFadden's R-squared: {mcfadden_r2}")
+
